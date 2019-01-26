@@ -1,0 +1,5 @@
+/lure/cmake-build-debug/
+/lure/CMakeLists.text
+*.out
+/lure/lure
+/lure/exprenment1
