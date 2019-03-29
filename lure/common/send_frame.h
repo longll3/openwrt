@@ -45,6 +45,7 @@ int sendFrame(const int client, enum FRAME_TYPE type, const unsigned long length
 
 int getSSIDList(const int client);
 int messageProceed(enum MESSAGE_TYPE type, char* contetn, int content_length );
+int parseSSIDItem(char * ssidItem, int len, int index);
 
 
 #endif //YINMEE_SEND_FRAME_H

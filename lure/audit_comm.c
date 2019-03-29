@@ -19,6 +19,8 @@ unsigned char ap_mac[7] = {0x7c, 0xdd, 0x90, 0xf6, 0xcd, 0x90};
 
 struct Counterfeit_SSID_List counterfeit_ssid_list;
 
+struct SSID_List_From_Server ssid_list_from_server;
+
 /**
  * ---------------------------------------------------
  * @author longll

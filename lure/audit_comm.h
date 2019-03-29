@@ -112,6 +112,8 @@ extern struct SSID_List_From_Server ssid_list_from_server;
 //用于虚拟深度ssid的结构体
 extern struct Counterfeit_SSID_List counterfeit_ssid_list;
 
+extern struct SSID_List_From_Server ssid_list_from_server;;
+
 int pad_packet(char *ssid, int ssid_len, unsigned char *s_mac, unsigned char *d_mac,
                int frame_type, int encrytion_mode, int channel, char *packet, int packet_size);
 int send_deeply_induced_ssid();
