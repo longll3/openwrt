@@ -32,7 +32,7 @@ unsigned char packet[256];
 
 void handle_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
 
-    printf("get one packet\n");
+//    printf("get one packet\n");
 
     int data_len = pkthdr->caplen;
     int header_len = 0;
