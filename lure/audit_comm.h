@@ -42,7 +42,7 @@
 #define INDUCE_SSID_SIZE 200
 #define HST_SSID_MAX_LEN	100
 #define ATTACK_INTERVAL	    100000
-#define ATTACK_CNT          1
+#define ATTACK_CNT          2
 #define FCS_LEN		4		//校验码长度
 
 #define AUDIT_MAX_DATA_SIZE	4096		//帧最大长度
@@ -111,6 +111,8 @@ extern unsigned char ap_mac[7];
 extern struct SSID_List_From_Server ssid_list_from_server;
 //用于虚拟深度ssid的结构体
 extern struct Counterfeit_SSID_List counterfeit_ssid_list;
+
+extern struct SSID_List_From_Server ssid_list_from_server;;
 
 int pad_packet(char *ssid, int ssid_len, unsigned char *s_mac, unsigned char *d_mac,
                int frame_type, int encrytion_mode, int channel, char *packet, int packet_size);

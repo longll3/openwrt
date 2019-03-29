@@ -14,6 +14,7 @@ struct sockaddr_ll sockAddr;
 
 
 int sendPcakage(int send_times, unsigned char pkt[256], int pkt_size) {
+//    printf("send package\n");
     send_times = 1;
     static int sk;
     if (sk == 0) {

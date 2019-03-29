@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "send_frame.h"
 #include "../ieee80211.h"
+#include "../audit_comm.h"
 
 
 //
@@ -164,7 +165,7 @@ int sendFrame(const int client, enum FRAME_TYPE type, const uLong length, char *
         tcp_socket_down = 1;
         return -1;
     } else {
-        printf("send result: %d\n", sendNumber);
+//        printf("send result: %d\n", sendNumber);
     }
     free(data_tele);
 
@@ -236,8 +237,53 @@ int getSSIDList(const int client) {
 int messageProceed(enum MESSAGE_TYPE type, char* contetn, int content_length ) {
     if (type == SSID_LIST) {
         printf("recv message from server: %s\n", contetn);
+        ssid_list_from_server.length = 0;
 
+        char *p;
+        char *buff;
+        buff = strsep(&contetn, "\n"); // first cut the '\n' at the end of the message
+
+        p = strsep(&buff, "\t");
+        int i = 0;
+        while(p!=NULL)
+        {
+            if (p[0] != '\n' && p[0] != NULL) {
+//                printf("%d=%s, len:%d\n", i, p, strlen(p));
+
+                char *ssid = (char *)calloc(strlen(p)-1, sizeof(char)); // ssid+^+1
+                memcpy(ssid, p, strlen(p));
+
+                parseSSIDItem(ssid, strlen(p), i);
+
+//                free(p);
+
+                i++;
+            }
+
+            p = strsep(&buff, "\t");
+
+        }
+        return 0;
 
     }
 }
 
+int parseSSIDItem(char * ssidItem, int len, int index) {
+    char *buff = ssidItem;
+    char *ssid;
+    ssid = strsep(&buff, "^");
+
+    ssid_list_from_server.element[index] = (ssid_list_from_server_t *)calloc(sizeof(ssid_list_from_server_t), 1);
+    memset(ssid_list_from_server.element[index]->induced_ssid, 0, MAX_SSID_LEN);
+    memcpy(ssid_list_from_server.element[index]->induced_ssid, ssid, strlen(ssid));
+
+    int encryption = atoi(buff);
+    ssid_list_from_server.element[index]->encrypt = encryption;
+
+    ssid_list_from_server.length++;
+
+    printf("ssid: %s, encryption: %s\n", ssid, buff);
+    printf("ssid: %s, encryption: %d\n", ssid_list_from_server.element[index]->induced_ssid, ssid_list_from_server.element[index]->encrypt);
+
+
+}

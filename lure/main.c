@@ -227,7 +227,7 @@ int main() {
 
     send_deeply_induced_ssid();
 
-    printf("%d\n",counterfeit_ssid_list.length);
+    printf("counterfeit_ssid_list.length=%d\n",counterfeit_ssid_list.length);
 
     experenment();
 //    experenmentForBeacon();
