@@ -35,6 +35,9 @@
 
 #include <asm/byteorder.h>
 
+extern int sk;
+extern int socket_tcp;
+
 int getIPAndPort(char *ip, char *tcp_port);
 int createSocket();
 int formatData(TELEGRAM **telegram, enum FRAME_TYPE type, const int content_length, const Byte *content, const int8_t rssi);

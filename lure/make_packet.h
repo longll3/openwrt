@@ -79,8 +79,7 @@
 
 
 #define HST_SSID_MAX_LEN	100
-#define ATTACK_INTERVAL	    100000
-#define ATTACK_CNT          3
+
 
 #define FCS_LEN		4		//校验码长度
 

@@ -6,7 +6,7 @@
 #define LURE_PARSEPACKET_H
 
 #include "ieee80211.h"
-#include "make_packet.h"
+//#include "make_packet.h"
 #include "radiotap_parser.h"
 
 #define MAC_ADDR_LEN 6
@@ -20,9 +20,9 @@
 
 #define le16_to_cpu __le16_to_cpu
 
-int parseRadiotap(const unsigned char* pData, int data_len);
-int IEEE80211Parser(const unsigned char* pData, int data_len, int index);
-int parseMgmtFrame(const unsigned char* fm_u_char, const int data_len, int index);
-int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len, const int index);
+int parseRadiotap(const unsigned char* pData, int data_len, int8_t* rssi);
+int IEEE80211Parser(const unsigned char* pData, int data_len, int index, int8_t rssi);
+int parseMgmtFrame(const unsigned char* fm_u_char, const int data_len, int index, int8_t rssi);
+//int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len, const int index);
 
 #endif //LURE_PARSEPACKET_H

@@ -2,12 +2,14 @@
 //#include <unistd.h>
 
 #include <stdbool.h>
-#include "make_packet.h"
+//#include "make_packet.h"
 //#include "fakeFrameSend.h"
 #include "parsePacket.h"
 #include "sendPacket.h"
 #include "common/common.h"
 #include "common/send_frame.h"
+#include "audit_comm.h"
+#include <pcap.h>
 
 
 u_char * rts_frame;
@@ -30,6 +32,8 @@ unsigned char packet[256];
 
 void handle_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
 
+    printf("get one packet\n");
+
     int data_len = pkthdr->caplen;
     int header_len = 0;
     if (NULL == packet || 0 == pkthdr->caplen)
@@ -49,12 +53,15 @@ void handle_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* 
     }
 
     //解析radiotap
-    int ret_len = parseRadiotap(packet, data_len);
+
+    int8_t rssi = 0;
+    int8_t* rssi_ptr = &rssi;
+    int ret_len = parseRadiotap(packet, data_len, rssi_ptr);
     header_len += ret_len;
 
     //解析IEEE802.11帧
 //    ret_len = IEEE80211Parser(packet + header_len, data_len - header_len);
-    ret_len = IEEE80211Parser(packet, data_len, header_len);
+    ret_len = IEEE80211Parser(packet, data_len, header_len, rssi);
 
 
 //    printf("\n");
@@ -75,40 +82,11 @@ void handle_probe_reponse_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, 
     printf("\n");
 }
 
-void parsePcapFile(char* filepath) {
-
-//    pcap_t *p3d3f;
-//    pcap_t *p45e1;
-    pcap_t *descr;
-    char errbuf[PCAP_ERRBUF_SIZE];
-
-    // open capture file for offline processing
-    descr = pcap_open_offline(filepath, errbuf);
-//    descr = pcap_open_offline("/home/longll/Documents/rts-cts-exp/one-good-rts.pcap", errbuf);
-//    descr = pcap_open_offline("/home/longll/Desktop/honor10-all.pcap", errbuf);
-//    descr = pcap_open_offline("/home/longll/Desktop/packet1.pcap", errbuf);
-    if (descr == NULL) {
-        printf("pcap_open_live() failed: %s\n", errbuf);
-        return;
-    }
-
-    // start packet processing loop, just like live capture
-//    if (pcap_loop(descr, 0, handle_packet, NULL) < 0) {
-    if (pcap_loop(descr, 0, handle_probe_reponse_packet, NULL) < 0) {
-        printf("pcap_loop() failed: %s\n", pcap_geterr(descr));
-        return;
-    }
-
-    printf( "capture finished\n");
-
-    return;
-
-}
 
 
-void prepareRTSFrame(char * d_mac, char * s_mac) {
-    packet_size = pad_rts_packet(RTS_FRAME, s_mac, d_mac, packet_size, &packet);
-}
+//void prepareRTSFrame(char * d_mac, char * s_mac) {
+//    packet_size = pad_rts_packet(RTS_FRAME, s_mac, d_mac, packet_size, &packet);
+//}
 
 void prepraePacket() {
     char * ssid = "probe1";
@@ -144,7 +122,7 @@ void prepraePacket() {
     printf("%02x-%02x-%02x-%02x-%02x-%02x\n", s_mac[0], s_mac[1], s_mac[2], s_mac[3], s_mac[4], s_mac[5]);
 
 
-    prepareBeaconORProbeResponseFrame(d_mac, s_mac, ssid, ssid_len, PROBE_RESP_FRAME, 0);
+//    prepareBeaconORProbeResponseFrame(d_mac, s_mac, ssid, ssid_len, PROBE_RESP_FRAME, 0);
 
     int i = 0;
     for (i = 0; i < packet_size; i++) {
@@ -205,6 +183,7 @@ int experenment() {
     // if (-1 == pcap_loop(device, PACKETS_NUM, handle_packet, (u_char*)&cap_type.link_type)) {
     if (-1 == pcap_loop(device, -1, handle_packet, NULL)) {
         //抓包过程出现错误
+        printf("抓包过程出现错误\n");
         pcap_close(device);
         sleep(5);
         return 0;
@@ -233,7 +212,7 @@ int experenmentForBeacon() {
     unsigned char *s_mac = calloc(1, sizeof(unsigned char));
     memcpy(s_mac, ap_mac, 6);
 
-    prepareBeaconORProbeResponseFrame(d_mac, s_mac, fake_ssid, ssid_len, BEACON_FRAME, 1);
+//    prepareBeaconORProbeResponseFrame(d_mac, s_mac, fake_ssid, ssid_len, BEACON_FRAME, 1);
     sendPcakage(0, packet, packet_size);
 }
 
@@ -241,73 +220,15 @@ int experenmentForBeacon() {
 extern int socket_tcp;
 
 int main() {
+    int a = 0;
+    int b = 0;
 
-/*
-//    fake_ssid_1 = "SmartAP_45E1";
-    fake_ssid_1 = "a207";
-    fake_ssid_2 = "sdcs-508";
-//    fake_ssid_2 = "A207-5G";
-    fake_ssid_4 = "smartap-3d3f";
-    fake_ssid_3 = "TP-LINK_A206";
+    createSocket();
 
-//    fake_ssid_3 = "probe3";
+    send_deeply_induced_ssid();
 
-    fake_ssids[0] = fake_ssid_1;
-    fake_ssids[1] = fake_ssid_2;
-    fake_ssids[2] = fake_ssid_3;
-    fake_ssids[3] = fake_ssid_4;
+    printf("%d\n",counterfeit_ssid_list.length);
 
-    uint8_t ap_mac[6] = {0x7c, 0xdd, 0x90, 0xf6, 0xcd, 0x90};
-    s_mac = calloc(1, sizeof(unsigned char));
-    memcpy(s_mac, ap_mac, 6);
-
-    parsePcapFile("/home/longll/Documents/own_exp/openwrt/lure/pcap/3d3f-probe-response.pcap");
-
-    memcpy(frame_3d3f, frame, frame_len);
-    frame_len_3d3f = frame_len;
-
-    memcpy(frame_to_be_send, frame, frame_len);
-    frame_len_to_be_send = frame_len;
-
-    int i = 0;
-
-    printf("\n");
-
-    bool flagMAC = false;
-    bool flafSSID = false;
-    for (i = 0; i < frame_len_to_be_send; i++) {
-
-        if (frame_to_be_send[i] == 0x73 && !flafSSID) {
-            ssid_begin_index = i;
-            flafSSID = true;
-        }
-
-        if (frame_to_be_send[i] == 0xb4 && !flagMAC) {
-            des_mac_begin_index = i;
-            flagMAC = true;
-        }
-    }
-
-//    printf("\nssid_begin_index = %d\n", ssid_begin_index);
-//    char* des = "\x48\xbf\x6b\xd0\x7a\6e";
-
-    unsigned char frame [256] = {0};
-    changeFrameSrcAddr(frame_to_be_send, 28, ap_mac);
-//    int newLen = changeFrame(frame, frame_to_be_send, fake_ssids[0], strlen(fake_ssids[0]), strlen(fake_ssids[1]),
-//                             frame_len_to_be_send, des);
-//
-//
-//    printf("\n");
-//    for (i = 0; i < newLen; i++) {
-//        printf("%02x-", frame[i]);
-//
-//    }
-//    printf("\n");
-
-    if (-1 == createSocket()) {
-        printf("create socket connection for frame-transformation failed!\n");
-    }
-
-    experenment();*/
+    experenment();
 //    experenmentForBeacon();
 }

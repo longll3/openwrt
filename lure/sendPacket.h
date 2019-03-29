@@ -7,7 +7,6 @@
 
 
 
-
-void sendPcakage(int send_times, unsigned char pkt[256], int pkt_size);
+int sendPcakage(int send_times, unsigned char pkt[256], int pkt_size);
 
 #endif //LURE_SENDPACKET_H

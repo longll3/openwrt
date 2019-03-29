@@ -25,6 +25,8 @@ int CREAT_SOCKET = 0;
 
 int tcp_socket_down = 0;
 
+int sk;
+
 #define TIMEOUT 30  /**< wait for recreating socket */
 #define BLOCK_TIMEOUT 60 /**< socket block time */
 
@@ -186,6 +188,11 @@ int getSSIDList(const int client) {
     char command[PACKET_MAXLEN] = {0};
     int recvMsg_len;
     static unsigned int order_cnt = 0;
+
+    if (client == -1) {
+        printf("connection failed\n");
+        createSocket();
+    }
 
     int send = sendFrame(client, ASK_SSID, 1, "1", 0);
     if (send == -1) {

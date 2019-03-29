@@ -10,7 +10,11 @@ extern unsigned char packet[256];
 
 struct sockaddr_ll sockAddr;
 
-void sendPcakage(int send_times, unsigned char pkt[256], int pkt_size) {
+
+
+
+int sendPcakage(int send_times, unsigned char pkt[256], int pkt_size) {
+    send_times = 1;
     static int sk;
     if (sk == 0) {
         printf("未绑定套接字\n");
@@ -48,12 +52,12 @@ void sendPcakage(int send_times, unsigned char pkt[256], int pkt_size) {
         //int sk = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
         if(sk < 0){
             perror("Create raw socket error");
-            return;
+            return -1;
         }
 
         if(bind(sk, (struct sockaddr*)&sockAddr, sizeof(sockAddr)) < 0){
             perror("Raw socket binding error");
-            return;
+            return -1;
         }
     } else {
 //        printf("sk: %d\n", sk);
@@ -83,14 +87,14 @@ void sendPcakage(int send_times, unsigned char pkt[256], int pkt_size) {
 //        printf("\n");
             int ret = sendto(sk, pkt, pkt_size, 0, (struct sockaddr*)&sockAddr, sizeof(struct sockaddr_ll));
             if (ret == -1) {
-                printf("send failure, send again\n");
-                sendto(sk, pkt, pkt_size, 0, (struct sockaddr*)&sockAddr, sizeof(struct sockaddr_ll));
+                return -1;
             } else {
 //                printf("send successful\n");
             }
 
             i++;
         }
+        return 0;
     }
 
 
