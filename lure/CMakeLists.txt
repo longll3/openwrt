@@ -19,6 +19,6 @@ SET(GCC_COVERAGE_LINK_FLAGS    "-lpcap" )
  ENDIF(UNIX AND NOT WIN32)
 include(FindPCAP.cmake)
 
-add_executable(lure main.c make_packet.h make_packet.c parsePacket.c parsePacket.h ieee80211.h sendPacket.c sendPacket.h ieee80211_radiotap.h radiotap_parser.h common/common.h common/common.c socketTest/server.c)
+add_executable(lure main.c make_packet.h make_packet.c parsePacket.c parsePacket.h ieee80211.h sendPacket.c sendPacket.h ieee80211_radiotap.h radiotap_parser.h common/common.h common/common.c socketTest/server.c common/send_frame.c common/send_frame.h common/msg.h)
 
 target_link_libraries(lure ${PCAP_LIBRARY})

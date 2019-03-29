@@ -6,8 +6,11 @@
 #include "sendPacket.h"
 #include "parsePacket.h"
 #include "common/common.h"
+#include "common/send_frame.h"
 
-//½âÎöradiotapÖ¡
+//#define PARSE_DEBUG 1
+
+//????radiotap??
 int parseRadiotap(const unsigned char* pData, int data_len)
 {
 //    printf("parse radiotap\n");
@@ -31,26 +34,31 @@ int parseRadiotap(const unsigned char* pData, int data_len)
     return header_len;
 }
 
-//½âÎöieee80211Ö¡
-int IEEE80211Parser(const unsigned char* pData, int data_len)
+//????ieee80211??
+int IEEE80211Parser(const unsigned char* data, int len, int index)
 {
-//    printf("parse ieee80211\n");
+#ifdef PARSE_DEBUG
+    printf("parse ieee80211\n");
+#endif
+    unsigned char* pData = data + index;
+    int data_len = len - index;
 
     int header_len = 0;
 
     struct ieee80211_hdr* fm_header =
             (struct ieee80211_hdr*) pData;
 
-    //¸ù¾ÝÖ¡ÀàÐÍ½øÐÐ´¦Àí
+    //?¨´?????¨¤?????????¨Ē
     if ( 1 == ieee80211_is_mgmt(fm_header->frame_control) )
     {
-        //¹ÜÀíÖ¡
+#ifdef PARSE_DEBUG
         printf("it is a management frame\n");
-        header_len = parseMgmtFrame(pData, data_len);
+#endif
+        header_len = parseMgmtFrame(data, len, index);
 
     }else if ( 1 == ieee80211_is_ctl(fm_header->frame_control) )
     {
-        //¿ØÖÆÖ¡
+        //??????
         header_len = -1;
 //        header_len = parseCtlFrame(pData, data_len);
     }else if ( 1 == ieee80211_is_data(fm_header->frame_control) )
@@ -60,7 +68,7 @@ int IEEE80211Parser(const unsigned char* pData, int data_len)
     }else
     {
         /*
-            ¶ÔÒ»ÏÂ¶¨Òå×ö´óÐ¡¶Ë×ª»»£¬¿ÉÒÔ»ñµÃÊý¾Ý°üÀàÐÍ
+            ???????Ą§??ĄÁ??¨Ž????ĄÁ?????????????????Ąã¨š?¨¤??
             #define IEEE80211_FTYPE_MGMT		0x0000
             #define IEEE80211_FTYPE_CTL		0x0004
             #define IEEE80211_FTYPE_DATA		0x0008
@@ -75,10 +83,13 @@ int IEEE80211Parser(const unsigned char* pData, int data_len)
     return header_len;
 }
 
-int parseMgmtFrame(const unsigned char* fm_u_char, const int data_len)
+int parseMgmtFrame(const unsigned char* data, const int len, int index)
 {
+
+    unsigned char* fm_u_char = data + index;
+    int data_len = len - index;
     /*
-        Çø·Ö¹ÜÀíÖ¡×ÓÀàÐÍ²¢·ÖÀà´¦Àí
+        ??Ą¤????¨Ē??ĄÁ??¨¤????Ą¤??¨¤???¨Ē
         Association request
         Association response
         Reassociation request
@@ -93,21 +104,25 @@ int parseMgmtFrame(const unsigned char* fm_u_char, const int data_len)
         Action
     */
 
-//    printf("parse management frame\n");
-
+#ifdef PARSE_DEBUG
+    printf("parse management frame\n");
+#endif
     int header_len = 0;
     struct ieee80211_hdr* fm_header = (struct ieee80211_hdr*) fm_u_char;
 
 
     /*
-        Çø·Ö¹ÜÀíÖ¡×ÓÀàÐÍ²¢·ÖÀà´¦Àí
+        ??Ą¤????¨Ē??ĄÁ??¨¤????Ą¤??¨¤???¨Ē
     */
 
     if(1 == ieee80211_is_probe_req(fm_header->frame_control))
     {
-//        printf("it is a probe request frame\n");
-        //Probe request(Ì½²â/Ì½ÕëÇëÇóÖ¡)
-        header_len = parseSTProbereqFrame(fm_u_char, data_len);
+#ifdef PARSE_DEBUG
+        printf("it is a probe request frame\n");
+#endif
+        //Probe request(????/???????¨Ž??)
+//        header_len = parseSTProbereqFrame(fm_u_char, data_len, index);
+        header_len = parseSTProbereqFrame(data, len, index);
     }
     else
     {
@@ -138,10 +153,42 @@ extern unsigned char packet[256];
 
 unsigned char *s_mac;
 
+extern int socket_tcp;
 
-int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len) {
-    printf("parse probe requesr frame\n");
+int parseSTProbereqFrame(const unsigned char* data, const int len, const int index) {
 
+
+    unsigned char* fm_u_char = data + index;
+    int data_len = len - index;
+
+    //send probe request frame to server
+//    if (send_frame_to_server == 3 || send_frame_to_server == 1) {
+
+        //backup data
+        unsigned char dataCopy[IEEE80211_MAX_FRAME_LEN] = {0};
+        memcpy(dataCopy, data, len);
+
+        if (socket_tcp == -1) {
+            printf("create soket failed!!");
+            createSocket();
+        }
+
+#ifdef PARSE_DEBUG
+        printf("got a pr frame, going to send\n");
+#endif
+        uint8_t rssi = 1;
+        int send = sendFrame(socket_tcp, PROBE_REQUEST_FRAME, len, dataCopy, rssi);
+//        int res = getSSIDList(socket_tcp);
+//        printf("send ssid ask\n");
+
+        if (send == -1) {
+            printf("send error, the length of package = %d\n", len);
+        }
+//    }
+
+#ifdef PARSE_DEBUG
+    printf("\nparse probe request frame\n");
+#endif
     int i = 0;
     int header_len = 0;
     int err_ssidLen = 0;
@@ -156,12 +203,12 @@ int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len) {
     uint8_t ssid[MAX_SSID_LEN] = {0};
 
 
-    //±£´æmacµØÖ·
+    //ĄĀ???mac???Ą¤
     memcpy(tmp_mac, ieee80211_get_SA(fm_header), MAC_ADDR_LEN);
 
-    //±éÀúÐÅÏ¢ÔªËØ²¿·Ö
-    //»ñÈ¡ÀúÊ·ssid
-    while(data_len - offset > FCS_LEN) { //frame check sequence length=4,Ã¿Ö¡µÄ×îºó4¸ö×Ö½ÚÊÇÓÃÀ´Ð£ÑéµÄ
+    //ĄĀ¨Ļ?¨˛??????????Ą¤?
+    //?????¨˛?Ą¤ssid
+    while(data_len - offset > FCS_LEN) { //frame check sequence length=4,??????ĄÁ??¨Ž4??ĄÁ????????????¨Ļ??
         switch (ie->id){
             case WLAN_EID_SSID:
                 ssid_len = (int)ie->len; // Convert the type of ie->len from unsigned int with 8 bits to int
@@ -181,40 +228,54 @@ int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len) {
         ie = (struct ieee80211_ie *) ((uint8_t *) ie  + ie->len + 1 + 1 );
     }
 
-    //Ã»ÓÐssid£¬ÔòÊÇÉ¨ÃèÖ¡£¬·¢ËÍ´øÓÐssidµÄÌ½²âÏìÓ¦Ö¡
+    //????ssid???¨°???Ą§?¨¨????Ą¤???????ssid???????¨Ŧ????
     if (!is_history) {
         //send probe response with different ssid
         printf("src mac: %02X-%02X-%02X-%02X-%02X-%02X\n", tmp_mac[0], tmp_mac[1], tmp_mac[2], tmp_mac[3], tmp_mac[4], tmp_mac[5]);
 
-        if (!ifFakeMAC(tmp_mac)) {
-            //if it is not a random mac address
-            return -1;
-        }
+//        if (!ifFakeMAC(tmp_mac)) {
+//            //if it is not a random mac address
+//            return -1;
+//        }
 
-        uint8_t mate7_1[6] = {0xb4, 0x30, 0x52, 0xfd, 0xbb, 0xf5};
-        unsigned char *d_mac = calloc(1, sizeof(unsigned char));
-        memcpy(d_mac, mate7_1, 6);
+//        uint8_t mate7_1[6] = {0xb4, 0x30, 0x52, 0xfd, 0xbb, 0xf5};
+//        unsigned char *d_mac = calloc(1, sizeof(unsigned char));
+//        memcpy(d_mac, mate7_1, 6);
 
-        int fake_ssid_len = strlen(ssid);
+//        int fake_ssid_len = strlen(ssid);
 
 
         int i = 0, j = 0;
-        for (i = 0; i < 2; i++) {
-            printf("send probe response\n");
-            prepareBeaconORProbeResponseFrame(tmp_mac, s_mac, fake_ssids[i], strlen(fake_ssids[i]), PROBE_RESP_FRAME, 1);
+        for (i = 0; i < 3; i++) {
+
+
+//            unsigned char frame [4096] = {0};
+//            printf("strlen(fake_ssids[i])=%d\n", strlen(fake_ssids[i]));
+//            int newLen = changeFrame(packet, frame_to_be_send, fake_ssids[i], strlen(fake_ssids[i]), 12, frame_len_to_be_send, tmp_mac);
+//            printf("ssid=%s\n", fake_ssids[i]);
+//            for (j = 0; j < newLen; j++) {
+//                printf("%02x-", packet[j]);
+//
+//            }
+
+            int pkt_size = prepareBeaconORProbeResponseFrame(tmp_mac, s_mac, fake_ssids[i], strlen(fake_ssids[i]), PROBE_RESP_FRAME, 1);
 //          prepareBeaconORProbeResponseFrame(d_mac, s_mac, fake_ssids[i], strlen(fake_ssids[i]), PROBE_RESP_FRAME, 1);
-            sendPcakage(1, packet, packet_size);
+            sendPcakage(5, packet, pkt_size);
+//            sendPcakage(5, packet, newLen);
+#ifdef PARSE_DEBUG
+            printf("send probe response, ssid=%s\n", fake_ssids[i]);
+#endif
         }
-        prepareBeaconORProbeResponseFrame(tmp_mac, s_mac, fake_ssids[i++], strlen(fake_ssids[2]), PROBE_RESP_FRAME, 0);
-        sendPcakage(1, packet, packet_size);
-        prepareBeaconORProbeResponseFrame(tmp_mac, s_mac, fake_ssids[i], strlen(fake_ssids[3]), PROBE_RESP_FRAME, 0);
-        sendPcakage(1, packet, packet_size);
+//        prepareBeaconORProbeResponseFrame(tmp_mac, s_mac, fake_ssids[i++], strlen(fake_ssids[2]), PROBE_RESP_FRAME, 0);
+//        sendPcakage(1, packet, packet_size);
+//        prepareBeaconORProbeResponseFrame(tmp_mac, s_mac, fake_ssids[i], strlen(fake_ssids[3]), PROBE_RESP_FRAME, 0);
+//        sendPcakage(1, packet, packet_size);
 
         /*//send probe response came from real AP
         sendPcakage(1, frame_3d3f, frame_len_3d3f);
         sendPcakage(1, frame_45e1, frame_len_45e1);*/
 
-        printf("sent probe request frame\n");
+//        printf("sent probe request frame\n");
     } else {
 
         printf("mac=%02x-%02x-%02x-%02x-%02x-%02x, ssid = %s\n", tmp_mac[0], tmp_mac[1], tmp_mac[2], tmp_mac[3], tmp_mac[4], tmp_mac[5], ssid);

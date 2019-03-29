@@ -7,6 +7,7 @@
 #include "parsePacket.h"
 #include "sendPacket.h"
 #include "common/common.h"
+#include "common/send_frame.h"
 
 
 u_char * rts_frame;
@@ -18,7 +19,7 @@ int frame_len_45e1 = 0;
 int frame_len_to_be_send = 0;
 
 int ssid_begin_index = 0; // ssid starts from this index included
-int src_mac_begin_index = 0; // total lenght of transmit mac and source mac should be 12
+int des_mac_begin_index = 0; // 
 
 extern unsigned char frame_3d3f[256];
 extern unsigned char frame_45e1[256];
@@ -52,10 +53,11 @@ void handle_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* 
     header_len += ret_len;
 
     //解析IEEE802.11帧
-    ret_len = IEEE80211Parser(packet + header_len, data_len - header_len);
+//    ret_len = IEEE80211Parser(packet + header_len, data_len - header_len);
+    ret_len = IEEE80211Parser(packet, data_len, header_len);
 
 
-    printf("\n");
+//    printf("\n");
 
     frame_len = pkthdr->caplen;
 
@@ -211,7 +213,7 @@ int experenment() {
     }
 
 
-    printf("\n");
+//    printf("\n");
 
 
 
@@ -235,46 +237,17 @@ int experenmentForBeacon() {
     sendPcakage(0, packet, packet_size);
 }
 
-/**
- * @author longll
- * @return len of new frame
- */
-int changeFrame(char *frame, char *ssid, int new_ssid_length, int old_ssid_len, int old_frame_len, char* des_mac) {
-    unsigned char fram_bck[256] = {0};
-    memcpy(fram_bck, frame_to_be_send, old_frame_len);
 
-    int index_old = 0;
-    int i = 0, j=0;
-
-    for (i=0, j = src_mac_begin_index; i < 6; i++) {
-        frame[j++] = des_mac[i];
-    }
-    for (i=0; i < 6; i++) {
-        frame[j++] = des_mac[i];
-    }
-
-    for (i = 0, j = ssid_begin_index; i < new_ssid_length; i++, j++) {
-        frame[j] = ssid[i];
-    }
-
-    for (i = ssid_begin_index+old_ssid_len; i < old_frame_len; i++, j++) {
-        frame[j] = fram_bck[i];
-    }
-
-    return j;
-
-
-}
+extern int socket_tcp;
 
 int main() {
 
-
-
+/*
 //    fake_ssid_1 = "SmartAP_45E1";
-    fake_ssid_1 = "A207";
-    fake_ssid_4 = "508";
+    fake_ssid_1 = "a207";
+    fake_ssid_2 = "sdcs-508";
 //    fake_ssid_2 = "A207-5G";
-    fake_ssid_2 = "smartap-3d3f";
+    fake_ssid_4 = "smartap-3d3f";
     fake_ssid_3 = "TP-LINK_A206";
 
 //    fake_ssid_3 = "probe3";
@@ -288,7 +261,7 @@ int main() {
     s_mac = calloc(1, sizeof(unsigned char));
     memcpy(s_mac, ap_mac, 6);
 
-    parsePcapFile("/home/longll/Documents/own_exp/lure/pcap/3d3f-probe-response.pcap");
+    parsePcapFile("/home/longll/Documents/own_exp/openwrt/lure/pcap/3d3f-probe-response.pcap");
 
     memcpy(frame_3d3f, frame, frame_len);
     frame_len_3d3f = frame_len;
@@ -298,12 +271,6 @@ int main() {
 
     int i = 0;
 
-    printf("%d\n", strlen(fake_ssid_2));
-//    printf("%d\n", strlen(frame_3d3f));
-    for (i=0; i < strlen(fake_ssid_2); i++) {
-
-        printf("%02x-", fake_ssid_2[i]);
-    }
     printf("\n");
 
     bool flagMAC = false;
@@ -315,26 +282,32 @@ int main() {
             flafSSID = true;
         }
 
-        if (frame_to_be_send[i] == 0xe6 && !flagMAC) {
-            src_mac_begin_index = i;
+        if (frame_to_be_send[i] == 0xb4 && !flagMAC) {
+            des_mac_begin_index = i;
             flagMAC = true;
         }
     }
 
-    printf("\nssid_begin_index = %d\n", ssid_begin_index);
-    char* des = "\x48\xbf\x6b\xd0\x7a\6e";
+//    printf("\nssid_begin_index = %d\n", ssid_begin_index);
+//    char* des = "\x48\xbf\x6b\xd0\x7a\6e";
 
-    int newLen = changeFrame(frame_to_be_send, fake_ssids[0], strlen(fake_ssids[0]), strlen(fake_ssids[1]),
-                             frame_len_to_be_send, des);
+    unsigned char frame [256] = {0};
+    changeFrameSrcAddr(frame_to_be_send, 28, ap_mac);
+//    int newLen = changeFrame(frame, frame_to_be_send, fake_ssids[0], strlen(fake_ssids[0]), strlen(fake_ssids[1]),
+//                             frame_len_to_be_send, des);
+//
+//
+//    printf("\n");
+//    for (i = 0; i < newLen; i++) {
+//        printf("%02x-", frame[i]);
+//
+//    }
+//    printf("\n");
 
-    for (i = 0; i < newLen; i++) {
-        printf("%02x-", frame_to_be_send[i]);
-
+    if (-1 == createSocket()) {
+        printf("create socket connection for frame-transformation failed!\n");
     }
 
-
-
-
-    experenment();
+    experenment();*/
 //    experenmentForBeacon();
 }

@@ -21,8 +21,8 @@
 #define le16_to_cpu __le16_to_cpu
 
 int parseRadiotap(const unsigned char* pData, int data_len);
-int IEEE80211Parser(const unsigned char* pData, int data_len);
-int parseMgmtFrame(const unsigned char* fm_u_char, const int data_len);
-int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len);
+int IEEE80211Parser(const unsigned char* pData, int data_len, int index);
+int parseMgmtFrame(const unsigned char* fm_u_char, const int data_len, int index);
+int parseSTProbereqFrame(const unsigned char* fm_u_char, const int data_len, const int index);
 
 #endif //LURE_PARSEPACKET_H
